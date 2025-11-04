@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 import typer
 
@@ -40,12 +40,20 @@ def generate(
             help="Source separator to use. 'none' to disable.",
         ),
     ] = SeparatorChoice.VocalRemover,
+    language: Annotated[
+        Literal["ja", "en"],
+        typer.Option(
+            "--language",
+            "-l",
+            help="Language of the lyrics. Required: 'ja' for Japanese, 'en' for English.",
+        ),
+    ] = ...,
 ):
     with parse_song_argument(song_file) as (song, output):
         lyrics = parse_lyrics_argument(lyrics_file)
         separator = get_separator(separator_choice)
 
-        yohane = Yohane(separator)
+        yohane = Yohane(separator, language=language)
 
         yohane.load_song(song)
         yohane.load_lyrics(lyrics)
@@ -77,13 +85,21 @@ def separate(
             help="Source separator to use. 'none' to disable.",
         ),
     ] = SeparatorChoice.VocalRemover,
+    language: Annotated[
+        Literal["ja", "en"],
+        typer.Option(
+            "--language",
+            "-l",
+            help="Language (required for initialization, not used in separation).",
+        ),
+    ] = "ja",
 ):
     with parse_song_argument(song_file) as (song, output):
         separator = get_separator(separator_choice)
         if separator is None:
             raise RuntimeError("No separator selected")
 
-        yohane = Yohane(separator)
+        yohane = Yohane(separator, language=language)
         yohane.load_song(song)
 
         yohane.extract_vocals()

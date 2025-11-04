@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import Literal
 
 import torch
 import torchaudio
@@ -13,8 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 class Yohane:
-    def __init__(self, separator: Separator | None):
+    def __init__(self, separator: Separator | None, language: Literal["ja", "en"]):
         self.separator = separator
+        self.language = language
         self.song: tuple[torch.Tensor, int] | None = None
         self.vocals: tuple[torch.Tensor, int] | None = None
         self.lyrics: Lyrics | None = None
@@ -53,7 +55,7 @@ class Yohane:
 
     def load_lyrics(self, lyrics_str: str):
         logger.info("Loading lyrics")
-        self.lyrics = Lyrics(lyrics_str)
+        self.lyrics = Lyrics(lyrics_str, language=self.language)
 
     def force_align(self):
         logger.info("Computing forced alignment")

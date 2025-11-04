@@ -37,9 +37,24 @@ cd yohane/
 pixi run yohane --help
 ```
 
+## Usage
+
+### Basic Usage
+
+```sh
+# For Japanese songs
+yohane generate song.mp3 lyrics.txt --language ja
+
+# For English songs
+yohane generate song.mp3 lyrics.txt --language en
+
+# Disable vocal separation (if audio is already vocals-only)
+yohane generate vocals.wav lyrics.txt --language en --separator none
+```
+
 ## Caveats
 
-- Yohane's syllable splitting is only optimized for Japanese lyrics at the moment
+- Yohane supports Japanese and English lyrics (specify with `--language ja` or `--language en`)
 - Syllables at the end of lines are often shortened
 - Forced alignment can't deal with overlapping vocals
 - It is not fully accurate, you should still check and edit the result!
