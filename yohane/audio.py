@@ -23,6 +23,10 @@ def compute_alignments(waveform: torch.Tensor, sample_rate: int, transcript: lis
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.info(f"Using {device=}")
 
+    # Clear CUDA cache if using GPU
+    if device.type == "cuda":
+        torch.cuda.empty_cache()
+
     waveform = waveform.mean(0, keepdim=True)
     waveform, sample_rate = (
         torchaudio.functional.resample(
@@ -32,17 +36,33 @@ def compute_alignments(waveform: torch.Tensor, sample_rate: int, transcript: lis
     )
 
     model = fa_bundle.get_model()
-    model.to(device)
-
     tokenizer = fa_bundle.get_tokenizer()
     aligner = fa_bundle.get_aligner()
 
-    with torch.inference_mode():
-        emission, _ = model(waveform.to(device))
-        emission = cast(torch.Tensor, emission)
-        tokens = tokenizer(transcript)
-        tokens = cast(list[list[int]], tokens)
-        token_spans = aligner(emission[0], tokens)
+    # Try GPU first, fall back to CPU if CUDA fails
+    try:
+        model.to(device)
+        with torch.inference_mode():
+            emission, _ = model(waveform.to(device))
+            emission = cast(torch.Tensor, emission)
+            tokens = tokenizer(transcript)
+            tokens = cast(list[list[int]], tokens)
+            token_spans = aligner(emission[0], tokens)
+    except RuntimeError as e:
+        if device.type == "cuda" and ("CUDA" in str(e) or "CUBLAS" in str(e)):
+            logger.warning(f"CUDA error during inference, falling back to CPU: {e}")
+            device = torch.device("cpu")
+            torch.cuda.empty_cache()
+            model = fa_bundle.get_model()  # Get fresh model
+            model.to(device)
+            with torch.inference_mode():
+                emission, _ = model(waveform.to(device))
+                emission = cast(torch.Tensor, emission)
+                tokens = tokenizer(transcript)
+                tokens = cast(list[list[int]], tokens)
+                token_spans = aligner(emission[0], tokens)
+        else:
+            raise
 
     return emission, token_spans
 
