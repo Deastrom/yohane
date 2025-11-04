@@ -4,3 +4,23 @@ uv = "latest"
 
 [env]
 '_'.python.venv = { path = ".venv", create = true, uv_create_args = [ "--seed" ] }
+
+[tasks.sync]
+description = "Install base dependencies"
+run = "uv sync"
+
+[tasks."sync:cli"]
+description = "Install dependencies with CLI extras"
+run = "uv sync --extra cli"
+
+[tasks.build]
+description = "Build the yohane package"
+run = "uv build"
+
+[tasks."build:cli"]
+description = "Build the yohane-cli package"
+run = "uv build --package yohane-cli"
+
+[tasks."build:all"]
+description = "Build all workspace packages"
+run = "uv build --all"

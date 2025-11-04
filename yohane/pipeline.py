@@ -61,7 +61,7 @@ class Yohane:
         logger.info("Computing forced alignment")
         assert self.forced_aligned_audio is not None and self.lyrics is not None
         self.forced_alignment = compute_alignments(
-            *self.forced_aligned_audio, self.lyrics.transcript
+            *self.forced_aligned_audio, self.lyrics.transcript_for_alignment
         )
 
     def make_subs(self):

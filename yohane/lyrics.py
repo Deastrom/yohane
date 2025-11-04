@@ -18,6 +18,11 @@ class _Text:
     def transcript(self):
         return self.normalized.split()
 
+    @cached_property
+    def transcript_for_alignment(self):
+        """Transcript with parentheses stripped for forced alignment tokenizer."""
+        return strip_parens(self.normalized).split()
+
 
 @dataclass
 class Lyrics(_Text):
@@ -46,10 +51,16 @@ class Word(_Text):
         return auto_split(self.normalized, self.language)
 
 
+def strip_parens(text: str) -> str:
+    """Strip parentheses from text for forced alignment."""
+    return text.replace("(", "").replace(")", "")
+
+
 def normalize_uroman(text: str):
     text = text.lower()
-    text = text.replace("’", "'")
-    text = re.sub("([^a-z'\n ])", " ", text)
+    text = text.replace("'", "'")
+    # Preserve parentheses for backing vocals detection
+    text = re.sub("([^a-z'\n ()])", " ", text)
     text = re.sub("\n[\n ]+", "\n", text)
     text = re.sub(" +", " ", text)
     return text.strip()

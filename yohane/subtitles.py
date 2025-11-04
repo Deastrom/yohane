@@ -7,7 +7,7 @@ from torchaudio.functional import TokenSpan
 from torchaudio.pipelines import Wav2Vec2FABundle
 
 from yohane.audio import fa_bundle
-from yohane.lyrics import Lyrics
+from yohane.lyrics import Lyrics, strip_parens
 from yohane.utils import get_identifier
 
 
@@ -126,7 +126,9 @@ def _time_syllable(
     syllable: str,
     span_idx: int,
 ):
-    syllable_tokens = tokenizer([syllable])
+    # Strip parentheses for tokenization, but keep original syllable for output
+    syllable_for_alignment = strip_parens(syllable)
+    syllable_tokens = tokenizer([syllable_for_alignment])
     nb_tokens = len(syllable_tokens[0])
 
     # start and end time of syllable
