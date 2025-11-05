@@ -97,7 +97,7 @@ def main(
                         raise typer.Exit(1)
                     vocals_file = Path(stems["vocals"])
                     console.print(f"[yellow]⚠[/yellow] Using original vocals: {vocals_file}")
-                    console.print(f"[dim]Tip: Run step 03 (vocal_processing) for better alignment[/dim]")
+                    console.print("[dim]Tip: Run step 03 (vocal_processing) for better alignment[/dim]")
                     logger.info(f"Using original vocals: {vocals_file}")
 
             if lyrics_file is None:
