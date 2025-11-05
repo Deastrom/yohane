@@ -8,7 +8,6 @@ Generates clean ASS with karaoke timing.
 """
 
 import logging
-import subprocess
 import sys
 from pathlib import Path
 from typing import Optional
@@ -22,7 +21,7 @@ _root_dir = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(_root_dir / "scripts"))
 
 try:
-    from pipeline_state import PipelineState, get_project_root
+    from pipeline_state import PipelineState
     PIPELINE_STATE_AVAILABLE = True
 except ImportError as e:
     PIPELINE_STATE_AVAILABLE = False
