@@ -10,7 +10,7 @@ Generates clean ASS with karaoke timing.
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Literal, Optional
 
 import typer
 from rich.console import Console
@@ -20,6 +20,9 @@ from rich.console import Console
 _root_dir = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(_root_dir / "scripts"))
 
+if TYPE_CHECKING:
+    from pipeline_state import PipelineState
+
 try:
     from pipeline_state import PipelineState
     PIPELINE_STATE_AVAILABLE = True
@@ -27,6 +30,7 @@ except ImportError as e:
     PIPELINE_STATE_AVAILABLE = False
     import warnings
     warnings.warn(f"pipeline_state not available: {e}")
+    PipelineState = None  # type: ignore
 
 app = typer.Typer()
 console = Console()
@@ -131,8 +135,13 @@ def main(
     try:
         from yohane import Yohane
 
+        # Validate language parameter
+        if language not in ("ja", "en"):
+            console.print(f"[red]Error: Invalid language '{language}'. Must be 'ja' or 'en'[/red]")
+            raise typer.Exit(1)
+        
         # Create Yohane instance without separator (we already have vocals)
-        yohane = Yohane(separator=None, language=language)
+        yohane = Yohane(separator=None, language=language)  # type: ignore[arg-type]
 
         # Load vocals audio
         logger.info(f"Loading vocals: {vocals_file}")

@@ -55,7 +55,7 @@ class Yohane:
 
     def load_lyrics(self, lyrics_str: str):
         logger.info("Loading lyrics")
-        self.lyrics = Lyrics(lyrics_str, language=self.language)
+        self.lyrics = Lyrics(lyrics_str, language=self.language)  # type: ignore[arg-type]
 
     def force_align(self):
         logger.info("Computing forced alignment")

@@ -47,7 +47,7 @@ def generate(
             "-l",
             help="Language of the lyrics. Required: 'ja' for Japanese, 'en' for English.",
         ),
-    ] = ...,
+    ],
 ):
     with parse_song_argument(song_file) as (song, output):
         lyrics = parse_lyrics_argument(lyrics_file)
