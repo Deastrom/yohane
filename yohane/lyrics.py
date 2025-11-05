@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cached_property
 from typing import Literal
@@ -123,7 +124,7 @@ _CUSTOM_ENGLISH_SYLLABLES: dict[str, list[str]] = {
 _ENGLISH_DICT = pyphen.Pyphen(lang="en_US")
 
 
-def split_english(word: str) -> list[str]:
+def split_english(word: str) -> Sequence[str]:
     """Split English word into syllables using custom dictionary + pyphen.
 
     First checks custom dictionary for common words pyphen misses,
@@ -135,11 +136,11 @@ def split_english(word: str) -> list[str]:
 
     # Fall back to pyphen
     result = _ENGLISH_DICT.inserted(word, hyphen="|")
-    syllables = result.split("|") if result else [word]
+    syllables: Sequence[str] = result.split("|") if result else [word]
     return syllables
 
 
-def auto_split(word: str, language: Literal["ja", "en"] = "ja") -> list[str]:
+def auto_split(word: str, language: Literal["ja", "en"] = "ja") -> Sequence[str]:
     """Split word into syllables based on language."""
     if language == "en":
         return split_english(word)

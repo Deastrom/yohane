@@ -32,6 +32,14 @@ def generate(
             help="Text file which contains the lyrics. (Optional: otherwise, a text editor will open.)",
         ),
     ] = None,
+    language: Annotated[
+        Literal["ja", "en"],
+        typer.Option(
+            "--language",
+            "-l",
+            help="Language of the lyrics. 'ja' for Japanese, 'en' for English.",
+        ),
+    ] = "ja",
     separator_choice: Annotated[
         SeparatorChoice,
         typer.Option(
@@ -40,14 +48,6 @@ def generate(
             help="Source separator to use. 'none' to disable.",
         ),
     ] = SeparatorChoice.VocalRemover,
-    language: Annotated[
-        Literal["ja", "en"],
-        typer.Option(
-            "--language",
-            "-l",
-            help="Language of the lyrics. Required: 'ja' for Japanese, 'en' for English.",
-        ),
-    ],
 ):
     with parse_song_argument(song_file) as (song, output):
         lyrics = parse_lyrics_argument(lyrics_file)

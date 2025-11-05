@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 """
-Step 5: Yohane Forced Alignment
+Step 6: Yohane Forced Alignment
 
 Uses Yohane for syllable-level forced alignment with separated vocals.
-Automatically uses enhanced vocals if available (from step 03c), otherwise uses original vocals.
+
+Auto-detection priority (best to worst):
+1. vocals_yohane.wav (from step 03 - desung, optimal for alignment)
+2. Original vocals (from separation - fallback)
+
 Generates clean ASS with karaoke timing.
 """
 
 import logging
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, Optional
+from typing import TYPE_CHECKING, Optional
 
 import typer
 from rich.console import Console
@@ -21,12 +25,17 @@ _root_dir = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(_root_dir / "scripts"))
 
 if TYPE_CHECKING:
-    from pipeline_state import PipelineState
+    from pipeline_state import (  # pyright: ignore[reportMissingImports]
+        PipelineState as PipelineStateType,
+    )
+else:
+    PipelineStateType = None
 
 try:
-    from pipeline_state import PipelineState
+    from pipeline_state import PipelineState  # pyright: ignore[reportMissingImports]
     PIPELINE_STATE_AVAILABLE = True
 except ImportError as e:
+    PipelineState = None  # type: ignore[assignment,misc]
     PIPELINE_STATE_AVAILABLE = False
     import warnings
     warnings.warn(f"pipeline_state not available: {e}")
@@ -48,7 +57,9 @@ def main(
     """
     Run Yohane forced alignment on vocals track
 
-    Automatically uses enhanced vocals if available (from step 03c), otherwise falls back to original vocals.
+    Automatically detects best vocals file:
+    1. vocals_yohane.wav (from step 03 - desung, best for alignment)
+    2. Original vocals (from separation - fallback)
     """
 
     # Setup logging
@@ -62,28 +73,31 @@ def main(
     # Auto-detect files from pipeline state if not provided
     if PIPELINE_STATE_AVAILABLE and (vocals_file is None or lyrics_file is None or output_file is None):
         try:
+            assert PipelineState is not None  # for type checker
             state = PipelineState(_root_dir)
             output_dir = Path(state.get_output_dir())
 
             if vocals_file is None:
-                # Check for enhanced vocals first
-                enhanced_vocals = output_dir / "processed" / "enhanced_vocals.wav"
-                logger.info(f"Checking for enhanced vocals at: {enhanced_vocals}")
-                logger.info(f"Enhanced vocals exists: {enhanced_vocals.exists()}")
-                if enhanced_vocals.exists():
-                    vocals_file = enhanced_vocals
-                    console.print(f"[green]✓[/green] Using enhanced vocals: {vocals_file}")
-                    logger.info(f"Using enhanced vocals for better alignment: {vocals_file}")
+                # Priority order: vocals_yohane.wav > original vocals
+                # 1. Check for processed vocals (from step 03 - best for alignment)
+                yohane_vocals = output_dir / "stems" / "vocals_yohane.wav"
+                logger.info(f"Checking for yohane-processed vocals at: {yohane_vocals}")
+
+                if yohane_vocals.exists():
+                    vocals_file = yohane_vocals
+                    console.print(f"[green]✓[/green] Using yohane-processed vocals: {vocals_file}")
+                    logger.info(f"Using yohane-processed vocals (desung) for optimal alignment: {vocals_file}")
                 else:
-                    # Fall back to original vocals
-                    logger.info("Enhanced vocals not found, checking pipeline state for original vocals")
+                    # 2. Fall back to original vocals from separation
+                    logger.info("No processed vocals found, checking pipeline state for original vocals")
                     stems = state.get_stems()
                     logger.info(f"Stems from pipeline state: {stems}")
                     if not stems or not stems.get("vocals"):
                         console.print("[red]Error: No vocals file found in pipeline state[/red]")
                         raise typer.Exit(1)
                     vocals_file = Path(stems["vocals"])
-                    console.print(f"[yellow]⚠[/yellow] Enhanced vocals not found, using original: {vocals_file}")
+                    console.print(f"[yellow]⚠[/yellow] Using original vocals: {vocals_file}")
+                    console.print(f"[dim]Tip: Run step 03 (vocal_processing) for better alignment[/dim]")
                     logger.info(f"Using original vocals: {vocals_file}")
 
             if lyrics_file is None:
@@ -172,6 +186,7 @@ def main(
         # Update pipeline state
         if PIPELINE_STATE_AVAILABLE:
             try:
+                assert PipelineState is not None  # for type checker
                 state = PipelineState(_root_dir)
                 state.set_alignment(
                     ass_file=str(output_file),
